@@ -1,6 +1,6 @@
 package algo;
 
-public class ActivityRecord {
+public class Activity {
 	double latitude;
 	double longitude;
 	String latLong;
@@ -8,6 +8,32 @@ public class ActivityRecord {
 	String dateTime;
 	long timeSpent;
 	String locationComment;
+	String meta;
+
+	public String getMeta() {
+		return meta;
+	}
+
+	public void setMeta(String meta) {
+		this.meta = meta;
+	}
+
+	public Activity() {
+		this.activity = "DEFAULT_ACTIVITY";
+		this.locationComment = "DEFAULT_COMMENT";
+	}
+
+	@Override
+	public String toString() {
+		String toString = getLatLong() + "," + getActivity() + ","
+				+ getDateTime() + "," + getTimeSpent() + ","
+				+ getLocationComment();
+		return toString;
+	}
+
+	public String toStringWithMeta() {
+		return toString() + "," + getMeta();
+	}
 
 	public double getLatitude() {
 		return latitude;

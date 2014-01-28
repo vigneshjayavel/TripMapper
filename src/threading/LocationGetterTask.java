@@ -1,21 +1,18 @@
 package threading;
 
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import foursquare.MyFoursquareWrapper;
+import algo.Activity;
 import algo.MainApp;
 import bing.MyBingAPI;
+import foursquare.MyFoursquareWrapper;
 
 public class LocationGetterTask implements Runnable {
 
-	private List<String> record;
-	private boolean fallback;
+	private Activity record;
+	private boolean canFallback;
 
-	public LocationGetterTask(List record, boolean fallback) {
-		this.record = record;
-		this.fallback = fallback;
+	public LocationGetterTask(Activity record2, boolean fallback) {
+		this.record = record2;
+		this.canFallback = fallback;
 	}
 
 	@Override
@@ -23,8 +20,8 @@ public class LocationGetterTask implements Runnable {
 
 		double latitude;
 		double longitude;
-		latitude = Double.valueOf(record.get(0));
-		longitude = Double.valueOf(record.get(1));
+		latitude = record.getLatitude();
+		longitude = record.getLongitude();
 		String location = MyBingAPI.getLocationName(latitude, longitude);
 		// System.out.println(longitude + "," + latitude + ":" + location);
 		// "record" already contains the point and the timestamp, we need to
@@ -35,7 +32,7 @@ public class LocationGetterTask implements Runnable {
 				.findLocationType(location));
 		String trailer = "bing:";
 
-		if (fallback == true) {
+		if (canFallback == true) {
 			/**
 			 * 
 			 * For some cases, we may not find the type of the activity from
@@ -54,10 +51,10 @@ public class LocationGetterTask implements Runnable {
 			}
 		}
 
-		record.add(2, activity);
-		record.add("5");
-		record.add(location);
-		record.add(trailer + MainApp.findLocationType(location));
+		record.setActivity(activity);
+		record.setTimeSpent(5);
+		record.setLocationComment(location);
+		record.setMeta(trailer + MainApp.findLocationType(location));
 
 	}
 

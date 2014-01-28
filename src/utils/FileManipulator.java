@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import algo.Activity;
+
 public class FileManipulator {
 
 	public static List readFile(String inputFileName) {
@@ -17,7 +19,7 @@ public class FileManipulator {
 		String line = "";
 		String splitBy = ",";
 
-		List<List<String>> records = new ArrayList<List<String>>();
+		List<Activity> records = new ArrayList<Activity>();
 		try {
 
 			br = new BufferedReader(new FileReader(inputFileName));
@@ -25,21 +27,11 @@ public class FileManipulator {
 
 				// use comma as separator
 				// we get three fields viz, lat,long and timestamp
-				String[] currentLine = line.split(splitBy);
-				List<String> record = new ArrayList<String>();
-				int findThirdField = 1;
-				for (String s : currentLine) {
-					if (findThirdField == 3) {
-						// we split the timestamp into date and time
-						String temp[] = s.split(" ");
-						record.add(temp[0]);
-						record.add(temp[1] + " " + temp[2]);
-						findThirdField = 1;
-					} else {
-						record.add(s);
-					}
-					findThirdField++;
-				}
+				String[] components = line.split(splitBy);
+				Activity record = new Activity();
+				record.setLatitude(Double.valueOf(components[0]));
+				record.setLongitude(Double.valueOf(components[1]));
+				record.setDateTime(components[2]);
 				records.add(record);
 
 			}
@@ -64,7 +56,7 @@ public class FileManipulator {
 	}
 
 	public static void writeFile(String outputFileName,
-			List<List<String>> records) {
+			List<Activity> fileRecords) {
 		FileWriter fileWriter = null;
 		BufferedWriter writer = null;
 		try {
@@ -72,18 +64,13 @@ public class FileManipulator {
 			writer = new BufferedWriter(fileWriter);
 			StringBuilder data = new StringBuilder();
 
-			for (List<String> record : records) {
-				int count = 1;
-				for (String s : record) {
-					if (count == 8) {
-						break;
-					} else {
-						data.append(s).append(",");
-
-						count++;
-					}
-				}
-				data.append("\n");
+			char comma = ',';
+			for (Activity record : fileRecords) {
+				data.append(record.getLatLong()).append(comma)
+						.append(record.getActivity()).append(comma)
+						.append(record.getDateTime()).append(comma)
+						.append(record.getTimeSpent()).append(comma)
+						.append(record.getLocationComment()).append("\n");
 			}
 			writer.write(data.toString());
 			writer.close();
@@ -104,12 +91,9 @@ public class FileManipulator {
 		}
 	}
 
-	public static void printRecords(List<List<String>> records) {
-		for (List<String> record : records) {
-			for (String s : record) {
-				System.out.print(s + " ");
-			}
-			System.out.println();
+	public static void printRecords(List<Activity> records) {
+		for (Activity record : records) {
+			System.out.println(record.toString());
 		}
 	}
 

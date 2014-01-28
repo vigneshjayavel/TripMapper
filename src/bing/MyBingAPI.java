@@ -31,7 +31,7 @@ public class MyBingAPI {
 
 	private static ObjectMapper mapper = new ObjectMapper();
 
-	private static final String rootUrl = "http://dev.virtualearth.net/REST/v1/";
+	private static final String rootUrl = "https://dev.virtualearth.net/REST/v1/";
 
 	public static String getKey() {
 		return bingMapsKey;

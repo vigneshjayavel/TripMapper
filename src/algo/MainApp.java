@@ -43,8 +43,7 @@ public class MainApp {
 		String inputFileName = "c:/input0.txt";
 		String outputFileName = "c:/output.txt";
 
-		List<List<String>> fileRecords = FileManipulator
-				.readFile(inputFileName);
+		List<Activity> fileRecords = FileManipulator.readFile(inputFileName);
 
 		int fileSize = fileRecords.size();
 		if (fileSize == 0) {
@@ -70,7 +69,7 @@ public class MainApp {
 
 		FileManipulator.printRecords(fileRecords);
 
-		FileManipulator.writeFile("C:/output.txt", fileRecords);
+		FileManipulator.writeFile(outputFileName, fileRecords);
 
 		System.out.println("TripMapper took "
 				+ (System.currentTimeMillis() - execStarted) / 1000
@@ -90,7 +89,7 @@ public class MainApp {
 	 * @param fileRecords
 	 * @return
 	 */
-	public static void preprocess(List<List<String>> fileRecords) {
+	public static void preprocess(List<Activity> fileRecords) {
 
 		// reverse geocode every single point
 		System.out
@@ -98,10 +97,10 @@ public class MainApp {
 		long timeSpent = 5;
 
 		ExecutorService executor = Executors.newFixedThreadPool(50);
-		boolean fallback = false; // Use foursquare data as fallback
-		for (List<String> record : fileRecords) {
+		boolean canFallback = false; // Use foursquare data as fallback
+		for (Activity record : fileRecords) {
 
-			Runnable worker = new LocationGetterTask(record, fallback);
+			Runnable worker = new LocationGetterTask(record, canFallback);
 			executor.execute(worker);
 
 		}
@@ -114,7 +113,7 @@ public class MainApp {
 		System.out.println("count = " + fileRecords.size());
 
 		// finally set the first record time = 0
-		fileRecords.get(0).set(5, "5");
+		fileRecords.get(0).setTimeSpent(5);
 
 	}
 
@@ -126,29 +125,29 @@ public class MainApp {
 	 * or Stay-related (Hotel stay, park, beach,..)
 	 */
 
-	public static void pass1(List<List<String>> records) {
-		ListIterator<List<String>> itr = records.listIterator();
+	public static void pass1(List<Activity> records) {
+		ListIterator<Activity> itr = records.listIterator();
 		String travelType = null;
 		while (itr.hasNext()) {
-			List cur = itr.next();
+			Activity current = itr.next();
 			if (itr.hasNext()) {
-				List nex = itr.next();
-				travelType = getTravelTypeIfAny(cur, nex);
+				Activity next = itr.next();
+				travelType = getTravelTypeIfAny(current, next);
 				if (travelType != null) {
 					double latitude1, latitude2;
 					double longitude1, longitude2;
-					latitude1 = Double.valueOf(cur.get(0).toString());
-					longitude1 = Double.valueOf(cur.get(1).toString());
-					latitude2 = Double.valueOf(nex.get(0).toString());
-					longitude2 = Double.valueOf(nex.get(1).toString());
+					latitude1 = current.getLatitude();
+					longitude1 = current.getLongitude();
+					latitude2 = next.getLatitude();
+					longitude2 = next.getLongitude();
 
 					// same point or place names means STATIC activity
 					if ((latitude1 != latitude2 && longitude1 != longitude2)
-							|| !(cur.get(6).toString().equals(nex.get(6)
-									.toString()))) {
-						cur.set(2, findActivityType(travelType));
+							|| !(current.getLocationComment().equals(next
+									.getLocationComment()))) {
+						current.setActivity(findActivityType(travelType));
 					} else {
-						cur.set(2, "STATIC");
+						current.setActivity("STATIC");
 					}
 					// itr.remove();
 					itr.previous();
@@ -164,15 +163,14 @@ public class MainApp {
 	 * two records. Finds the mode of transportation (if any) by checking the
 	 * distance between them and the time taken.
 	 * 
-	 * @param record1
-	 * @param record2
+	 * @param current
+	 * @param next
 	 * @return
 	 */
-	public static String getTravelTypeIfAny(List<String> record1,
-			List<String> record2) {
+	public static String getTravelTypeIfAny(Activity current, Activity next) {
 		String travelType = null;
-		String startTime = record1.get(4);
-		String endTime = record2.get(4);
+		String startTime = current.getDateTime();
+		String endTime = next.getDateTime();
 		long timeDiffFromRecords = 60 * TimeManipulator.findTimeDifferenceMins(
 				startTime, endTime);
 
@@ -190,8 +188,8 @@ public class MainApp {
 		// run the 3 API calls in parallel
 		for (Map.Entry<String, Map<String, String>> entry : resultsMap
 				.entrySet()) {
-			Runnable worker = new TravelDistanceTimeGetterTask(record1,
-					record2, entry.getKey(), entry.getValue());
+			Runnable worker = new TravelDistanceTimeGetterTask(current, next,
+					entry.getKey(), entry.getValue());
 			executor.execute(worker);
 		}
 
@@ -269,9 +267,8 @@ public class MainApp {
 					drivingDuration, transitDuration);
 		}
 
-		String log = "<%s,%s> to <%s,%s>";
-		log = String.format(log, record1.get(0), record1.get(1),
-				record2.get(0), record2.get(1));
+		String log = "<%s> to <%s>";
+		log = String.format(log, current.getLatLong(), next.getLatLong());
 		System.out.println(log + travelType);
 		return travelType;
 	}
@@ -311,12 +308,12 @@ public class MainApp {
 	 * Aggregation pass. here the duplications are aggregated based on the
 	 * geoPoint(lat,longitude), ACTIVITY and location name
 	 */
-	public static void pass2(List<List<String>> records) {
+	public static void pass2(List<Activity> records) {
 
-		ListIterator<List<String>> recordsItr = records.listIterator();
+		ListIterator<Activity> recordsItr = records.listIterator();
 		String currentActivity = null, nextActivity = null;
 		while (recordsItr.hasNext()) {
-			List<String> current, next;
+			Activity current, next;
 			/*
 			 * // reset strings currentPoint.setLength(0);
 			 * currentPlace.setLength(0); nextPoint.setLength(0);
@@ -329,8 +326,8 @@ public class MainApp {
 				// next record
 				next = recordsItr.next();
 
-				currentActivity = current.get(2);
-				nextActivity = next.get(2);
+				currentActivity = current.getActivity();
+				nextActivity = next.getActivity();
 
 				// same activity type. Merge it
 				if ((currentActivity.toString().equals(nextActivity.toString()))) {
@@ -338,9 +335,9 @@ public class MainApp {
 					// increment the time spent in that place by 5 and
 					// remove
 					// the next record (this record is considered duplicate)
-					current.set(5,
-							String.valueOf(Integer.valueOf(current.get(5)) + 5));
-					current.set(6, current.get(6) + " >>> " + next.get(6));
+					current.setTimeSpent(current.getTimeSpent() + 5);
+					current.setLocationComment(current.getLocationComment()
+							+ " >>> " + next.getLocationComment());
 					recordsItr.remove();
 					// move the pointer to the
 					// previous record so that we can compare it with the next
@@ -352,30 +349,37 @@ public class MainApp {
 		}
 		// finally add a record for the trip start and end
 
-		List<String> firstRecord = records.get(0);
-		String commentField = firstRecord.get(6);
-		records.add(0, ((List<String>) Arrays.asList(
-				firstRecord.get(0),
-				firstRecord.get(1),
-				"TRIP_START",
-				firstRecord.get(3),
-				firstRecord.get(4),
-				"0",
-				commentField.split(">>>").length > 0 ? commentField
-						.split(">>>")[0] : commentField, firstRecord.get(7))));
+		Activity firstRecord = records.get(0);
+		String commentField = firstRecord.getLocationComment();
+		Activity newActivity = new Activity();
+		newActivity.setLatitude(firstRecord.getLatitude());
+		newActivity.setLongitude(firstRecord.getLongitude());
+		newActivity.setActivity("TRIP_START");
+		newActivity.setDateTime(firstRecord.getDateTime());
+		newActivity.setTimeSpent(0);
+		newActivity.setLocationComment("Trip starts at "
+				+ (commentField.split(">>>").length > 0 ? commentField
+						.split(">>>")[0] : commentField));
+		records.add(0, newActivity);
 
-		List<String> lastRecord = records.get(records.size() - 1);
+		Activity lastRecord = records.get(records.size() - 1);
 
 		// add the time in the prev record to the end record so it is the
 		// updated
 		// end time
-		String endTime = TimeManipulator.addTime(lastRecord.get(4),
-				lastRecord.get(5));
+		String endTime = TimeManipulator.addTime(lastRecord.getDateTime(),
+				String.valueOf(lastRecord.getTimeSpent()));
 
 		// and TRIP_END and TRIP_END time = 0
-		records.add((List<String>) Arrays.asList(lastRecord.get(0),
-				lastRecord.get(1), "TRIP_END", lastRecord.get(3), endTime, "0",
-				lastRecord.get(6), lastRecord.get(6)));
+		newActivity = new Activity();
+		newActivity.setLatitude(lastRecord.getLatitude());
+		newActivity.setLongitude(lastRecord.getLongitude());
+		newActivity.setActivity("TRIP_END");
+		newActivity.setDateTime(endTime);
+		newActivity.setTimeSpent(0);
+		newActivity.setLocationComment("Trip ends at "
+				+ lastRecord.getLocationComment());
+		records.add(newActivity);
 
 	}
 

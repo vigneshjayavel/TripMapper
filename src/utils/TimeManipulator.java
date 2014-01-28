@@ -22,7 +22,7 @@ public class TimeManipulator {
 
 	public static Date getDate(final String date) {
 		final Calendar cal = Calendar.getInstance();
-		final SimpleDateFormat format = new SimpleDateFormat("HH:mm aa");
+		final SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm aa");
 		format.setCalendar(cal);
 
 		try {
@@ -34,7 +34,7 @@ public class TimeManipulator {
 	}
 
 	public static String addTime(String time, String addition) {
-		SimpleDateFormat df = new SimpleDateFormat("HH:mm aa");
+		SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm aa");
 		Date d = null;
 		try {
 			d = df.parse(time);
