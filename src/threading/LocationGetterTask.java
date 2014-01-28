@@ -1,16 +1,16 @@
 package threading;
 
-import algo.Activity;
+import algo.ActivityRecord;
 import algo.MainApp;
 import bing.MyBingAPI;
 import foursquare.MyFoursquareWrapper;
 
 public class LocationGetterTask implements Runnable {
 
-	private Activity record;
+	private ActivityRecord record;
 	private boolean canFallback;
 
-	public LocationGetterTask(Activity record2, boolean fallback) {
+	public LocationGetterTask(ActivityRecord record2, boolean fallback) {
 		this.record = record2;
 		this.canFallback = fallback;
 	}

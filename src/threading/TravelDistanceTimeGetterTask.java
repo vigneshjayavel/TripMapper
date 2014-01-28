@@ -2,18 +2,18 @@ package threading;
 
 import java.util.Map;
 
-import algo.Activity;
+import algo.ActivityRecord;
 import bing.MyBingAPI;
 
 public class TravelDistanceTimeGetterTask implements Runnable {
 
-	private Activity record1, record2;
+	private ActivityRecord record1, record2;
 	private String type;
 	private Map<String,String> result;
 
 	
 	
-	public TravelDistanceTimeGetterTask(Activity current, Activity next, String type, Map<String,String> result) {
+	public TravelDistanceTimeGetterTask(ActivityRecord current, ActivityRecord next, String type, Map<String,String> result) {
 		this.record1 = current;
 		this.record2 = next;
 		this.type = type;

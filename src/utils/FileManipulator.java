@@ -9,17 +9,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import algo.Activity;
+import algo.ActivityRecord;
 
 public class FileManipulator {
 
-	public static List readFile(String inputFileName) {
+	public static List<ActivityRecord> readFile(String inputFileName) {
 
 		BufferedReader br = null;
 		String line = "";
 		String splitBy = ",";
 
-		List<Activity> records = new ArrayList<Activity>();
+		List<ActivityRecord> records = new ArrayList<ActivityRecord>();
 		try {
 
 			br = new BufferedReader(new FileReader(inputFileName));
@@ -28,10 +28,10 @@ public class FileManipulator {
 				// use comma as separator
 				// we get three fields viz, lat,long and timestamp
 				String[] components = line.split(splitBy);
-				Activity record = new Activity();
-				record.setLatitude(Double.valueOf(components[0]));
-				record.setLongitude(Double.valueOf(components[1]));
-				record.setDateTime(components[2]);
+				ActivityRecord record = new ActivityRecord.Builder()
+						.latitude(Double.valueOf(components[0]))
+						.longitude(Double.valueOf(components[1]))
+						.dateTime(components[2]).build();
 				records.add(record);
 
 			}
@@ -56,7 +56,7 @@ public class FileManipulator {
 	}
 
 	public static void writeFile(String outputFileName,
-			List<Activity> fileRecords) {
+			List<ActivityRecord> fileRecords) {
 		FileWriter fileWriter = null;
 		BufferedWriter writer = null;
 		try {
@@ -65,7 +65,7 @@ public class FileManipulator {
 			StringBuilder data = new StringBuilder();
 
 			char comma = ',';
-			for (Activity record : fileRecords) {
+			for (ActivityRecord record : fileRecords) {
 				data.append(record.getLatLong()).append(comma)
 						.append(record.getActivity()).append(comma)
 						.append(record.getDateTime()).append(comma)
@@ -91,8 +91,8 @@ public class FileManipulator {
 		}
 	}
 
-	public static void printRecords(List<Activity> records) {
-		for (Activity record : records) {
+	public static void printRecords(List<ActivityRecord> records) {
+		for (ActivityRecord record : records) {
 			System.out.println(record.toString());
 		}
 	}
