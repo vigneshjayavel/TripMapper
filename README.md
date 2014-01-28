@@ -5,6 +5,8 @@ An intelligent Java application that summarizes geocodes.
 
 This is a submission to Microsoft Softcoding event conducted during Kurukshetra 2014.
 
+http://kurukshetra.org.in/events/softcoding
+
 The following is the problem statement for which the app is built.
 
 Problem Statement
