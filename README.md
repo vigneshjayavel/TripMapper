@@ -26,7 +26,7 @@ Your program does not have to produce one line of output for each line of input 
 Important Note: There is no ‘perfect solution’ for this problem since the output is dependent on how much you can infer from the location data of the trip. The idea is to infer as much rich information as you can from just the location data.
 
 Schema of input file
-====================
+
 <Latitude>,<Longitude>,<Time>
 
 Example:
@@ -42,7 +42,7 @@ Example:
 12.972421,77.593621,12/26/2013 7:40 PM
 
 Schema of output file
-======================
+
 <Latitude>,<Longitude>,<Activity>,<StartTime>,<TimeSpent>,<Comment>
 
 For the input above, one of the valid solution output files could be as follows:
